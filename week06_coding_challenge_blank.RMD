@@ -1,6 +1,6 @@
 ---
 title: "Week 06 Coding challenge"
-name: [ ]
+name: [Mele'ana K. 'Akolo ]
 output: html_notebook
 ---
 
@@ -25,18 +25,17 @@ library(mgcv)
 
 #load data set "LHS_TEXAS.csv"
 ```{r include=FALSE}
-# write your code here
-
+LHS_TEXAS <- read_csv("Data/LHS_TEXAS.csv")# write your code here
 ```
 
 # How many observations? 
 **answer** 
->
+>383
 
 
 # How many variables? 
 **answer**
->
+>35
 
 
 #we will focus on covid-19 related issues; refer to the codebook. 
@@ -47,17 +46,91 @@ library(mgcv)
 
 ```{r}
 ## your code goes here
+df.1<- LHS_TEXAS %>%
+  select(ResponseId,
+         covid_a_1, 
+         covid_b_1, 
+         covid_c_1, 
+         covid_d_1, 
+         covid_e_1, 
+         covid_emotional_1, 
+         covid_rent_1, 
+         covid_job_1, 
+         covid_food_1, 
+         covid_paycare_1, 
+         covid_transportation_1, 
+         covid_bills_1, 
+         covid_care_1, 
+         covid_sudtx_1, 
+         covid_perc_severity, 
+         ptsd1_1, ptsd2_1, 
+         ptsd3_1, ptsd4_1,
+         phq1_1, phq2_1, 
+         phq3_1, phq4_1, 
+         immigration1_1, 
+         immigration2_1, 
+         immigration3_1, 
+         stusps, county, 
+         age, sex, 
+         latino_subgroup, education, 
+         income, insurance)%>%
+  drop_na()
+```
 
+```{r}
+table(df.1$county)
+```
+
+```{r}
+df.2<- df.1 %>%
+ mutate(county_regions = case_when(
+    county %in% c(
+    "Ector", "Tom Green") ~ "West", 
+    county %in% c(
+      "El Paso", "Hudspeth") ~ "Rio Grande",
+    county %in% c ("Anderson", "Smith") ~ "Upper east",
+    county %in% c(
+      "San Jacinto") ~ "South east",
+    county %in% c("Brown") ~ "Northwest Region",
+    county %in% c("Collin", "Dallas", "Denton", "Ellis", "Parker", "Tarrant") ~ "Metroplex",
+    county %in% c("Hale", "Hall", "Hockley", "Lamb", "Lubbock", "Parmer", "Randall") ~ "High Plains",
+    county %in% c("Brazoria", "Fort Bend", "Galveston", "Harris", "Montgomery") ~ "Gulf Coast",
+    county %in% c("Bell", "Brazos", "Grimes","McLennan") ~ "Central",
+    county %in% c("Bastrop", "Caldwell", "Travis", "Williamson") ~ "Capital",
+    county %in% c("Bexar", "Calhoun", "Comal", "Guadalupe", "Kerr", "Victoria", "Wilson") ~ "Alamo",
+    county %in% c("Cameron","Hidalgo", "Jimwells", "Kleberg", "Nueces", "San Patricio", "Starr", "Val Verde", "Webb", "Willacy", "Zapata") ~ "South Texas")
+  )%>%
+  mutate(covid_awareness =
+           6-(rowMeans(across(covid_a_1:covid_e_1), 
+                              na.rm=T)),
+         ptsd_mean = 6- rowMeans(across(ptsd1_1:ptsd4_1), 
+                              na.rm=T), 
+         distress = rowSums(across(phq1_1:phq4_1),
+                            na.rm=T))%>%
+         replace_with_na(replace =
+                           list(covid_emotional_1=5,
+                                 covid_rent_1=5, 
+                                 covid_job_1=5, 
+                                 covid_food_1=5,
+                                 covid_paycare_1=5,
+                                 covid_transportation_1=5,
+                                 covid_bills_1=5,
+                                 covid_care_1=5,
+                                 covid_sudtx_1=5))
+```
+
+```{r}
+table(df.2$county_regions)
 
 ```
 # use `table ()` function to see frequency for each county_regions. Which county_region has the biggest sample? State the name of county_region and its sample size. 
 **answer**
->>
+>> Alamo
 
 
 # which county_region(s) has the smallest sample? State the name of county_region and its sample size:
 **answer**
->>
+>>Northwest and South east
 
 
 
@@ -70,12 +143,26 @@ Combine `metroplex`, `upper east`, `northwest`, `high plains` and name it as `no
 
 ```{r}
 ## your code goes here
+df.3<- df.2 %>%
+  mutate(general_regions = case_when(
+    county_regions %in% c("Rio Grande", "West", "South Texas") ~ "southwest_region",
+    county_regions %in% c("Alamo", "Capital","Central") ~ "capital_region",
+    county_regions %in% c("Gulf Coast", "South east") ~ "east_region",
+    county_regions %in% c("Metroplex", "Upper east", "Northwest", "High Plains") ~ "north_region"
+  ))
+```
 
+```{r}
+table(df.3$general_regions)
+  
 ```
 
 # use `table()` function to describe the four regions
 **answer**
->>
+>>This information tells us the amount of sample size for 4 general regions:
+
+ capital_region      east_region     north_region southwest_region 
+             121               89               99               72 
 
 
 
@@ -90,7 +177,59 @@ Combine `metroplex`, `upper east`, `northwest`, `high plains` and name it as `no
 
 ```{r}
 ## your code goes here
+df.4<- df.3%>%
+  mutate(covid_awareness =
+  (rowMeans(across(covid_a_1:covid_e_1), 
+                              na.rm=T)),
+         ptsd_mean = rowMeans(across(ptsd1_1:ptsd4_1), 
+                              na.rm=T), 
+         distress = rowSums(across(phq1_1:phq4_1),
+                            na.rm=T))%>%
+         replace_with_na(replace =
+                           list(covid_emotional_1=5,
+                                 covid_rent_1=5, 
+                                 covid_job_1=5, 
+                                 covid_food_1=5,
+                                 covid_paycare_1=5,
+                                 covid_transportation_1=5,
+                                 covid_bills_1=5,
+                                 covid_care_1=5,
+                                 covid_sudtx_1=5))
 
+```
+
+```{r}
+df.4$covid_neg_missing <-
+  apply(df.4[c("covid_emotional_1",
+                "covid_rent_1",
+                "covid_job_1",
+                "covid_food_1",
+                "covid_paycare_1",
+                "covid_transportation_1",
+                "covid_bills_1",
+                "covid_care_1",
+                "covid_sudtx_1")],
+        1, function(x)
+                                            sum(is.na(x)))
+```
+
+```{r}
+df.4$covid_neg_impact<-apply(df.4[c("covid_emotional_1",
+                                  "covid_rent_1",
+                                  "covid_job_1",
+                                  "covid_food_1",
+                                  "covid_paycare_1",
+                                  "covid_transportation_1",
+                                  "covid_bills_1",
+                                  "covid_care_1", 
+                                  "covid_sudtx_1")], 1, 
+                                           mean,
+                                           na.rm=T)
+df.4$covid_neg_impact<-ifelse(df.4$covid_neg_missing>=5, 
+                              NA,
+                               df.4$covid_neg_impact)
+df.4<- df.4 %>%
+  drop_na(covid_neg_impact)
 
 ```
 
@@ -98,6 +237,25 @@ Combine `metroplex`, `upper east`, `northwest`, `high plains` and name it as `no
 #compute mean, SD, and number of missing of the `covid_neg_impact` for the four general regions:
 
 ```{r}
+df.4$covid_neg_impact<-apply(df.4[c("covid_emotional_1",
+                                  "covid_rent_1",
+                                  "covid_job_1",
+                                  "covid_food_1",
+                                  "covid_paycare_1",
+                                  "covid_transportation_1",
+                                  "covid_bills_1",
+                                  "covid_care_1", 
+                                  "covid_sudtx_1")], 1, 
+                                           mean,
+                                           na.rm=T)
+```
+
+```{r}
+df.4%>%
+  group_by(general_regions)%>%
+  summarise(mean = mean(covid_neg_impact, na.rm=T),
+            SD = sd(covid_neg_impact, na.rm=T),
+            miss = mean(is.na(covid_neg_impact)))
 
 ```
 
@@ -109,7 +267,17 @@ Combine `metroplex`, `upper east`, `northwest`, `high plains` and name it as `no
 #compute mean, SD, and number of missing of the `covid_awareness` for the four general regions:
 
 ```{r}
-
+df.4$covid_awareness<-apply(df.4[c("covid_emotional_1",
+                                  "covid_rent_1",
+                                  "covid_job_1",
+                                  "covid_food_1",
+                                  "covid_paycare_1",
+                                  "covid_transportation_1",
+                                  "covid_bills_1",
+                                  "covid_care_1", 
+                                  "covid_sudtx_1")], 1, 
+                                           mean,
+                                           na.rm=T)
 
 ```
 
@@ -118,7 +286,10 @@ Combine `metroplex`, `upper east`, `northwest`, `high plains` and name it as `no
 #Plot density plot using `covid_neg_impact` by the four general regions:
 
 ```{r}
-
+df.4%>%
+  ggplot(aes(covid_neg_impact))+
+  geom_density()+
+  facet_wrap(~county_regions)
 
 ```
 
